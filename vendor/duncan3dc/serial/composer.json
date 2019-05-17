@@ -1,0 +1,40 @@
+{
+    "name": "duncan3dc/serial",
+    "type": "library",
+    "description": "Consistent serialization helpers for multiple backends",
+    "keywords": ["serialization", "serialisation", "serializer", "serialiser", "json", "yaml"],
+    "homepage": "https://github.com/duncan3dc/serial",
+    "license": "Apache-2.0",
+    "authors": [{
+        "name": "Craig Duncan",
+        "email": "git@duncanc.co.uk",
+        "homepage": "https://github.com/duncan3dc",
+        "role": "Developer"
+    }],
+    "require": {
+        "symfony/yaml": "^3.4 || ^4.2",
+        "ext-json": "*",
+        "php": "^7.1"
+    },
+    "require-dev": {
+        "maglnet/composer-require-checker": "^1.1",
+        "phpstan/phpstan": "^0.10.7",
+        "squizlabs/php_codesniffer": "^3.3.2",
+        "phpunit/phpunit": "^7.0"
+    },
+    "autoload": {
+        "psr-4": {"duncan3dc\\Serial\\": "src/"}
+    },
+    "autoload-dev": {
+        "psr-4": {"duncan3dc\\SerialTests\\": "tests/"}
+    },
+    "scripts": {
+        "test": [
+            "vendor/bin/phpunit --coverage-text",
+            "vendor/bin/composer-require-checker",
+            "vendor/bin/phpstan analyse --level=max --configuration=phpstan.neon src tests",
+            "vendor/bin/phpcs --standard=PSR1,PSR2,PSR12 src tests",
+            "@composer validate --strict"
+        ]
+    }
+}
