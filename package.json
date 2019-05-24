@@ -1,0 +1,29 @@
+{
+  "name": "phaser3-template",
+  "version": "1.0.0",
+  "description": "A helpful webpack template",
+  "scripts": {
+    "compile": "./node_modules/.bin/webpack --config webpack.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomcphr/phaser3-template.git"
+  },
+  "keywords": [
+    "rougelike"
+  ],
+  "author": "tomcphr",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tomcphr/phaser3-template/issues"
+  },
+  "homepage": "https://github.com/tomcphr/phaser3-template#readme",
+  "dependencies": {
+    "generate-maze": "^0.2.0",
+    "phaser": "^3.16.2"
+  },
+  "devDependencies": {
+    "webpack": "^4.29.6",
+    "webpack-command": "^0.4.1"
+  }
+}
