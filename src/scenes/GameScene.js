@@ -46,52 +46,41 @@ export default class GameScene extends Phaser.Scene {
         let rows = (camera.height / cellSize);
         let cols = (camera.width / cellSize);
 
-        var grid = [];
-        // 'r' represents Row, 'c' represents column
+        var grid = {};
+        var stack = {};
+        // 'r' represents Row, 'c' represents Column
         for (var r = 0; r < rows; r++) {
             for (var c = 0; c < cols; c++) {
-                let topRow;
-                let topCol;
+                let topRow = r;
+                let topCol = c - 1;
 
-                let rightRow;
-                let rightCol;
+                let rightRow = r + 1;
+                let rightCol = c;
 
-                let bottomRow;
-                let bottomCol;
+                let bottomRow = r;
+                let bottomCol = c + 1;
 
-                let leftRow;
-                let leftCol;
+                let leftRow = r - 1;
+                let leftCol = c;
 
-                topRow = r;
-                topCol = c - 1;
-
-                rightRow = r + 1;
-                rightCol = c;
-
-                bottomRow = r;
-                bottomCol = c + 1;
-
-                leftRow = r - 1;
-                leftCol = c;
-
-                if (topRow < 0 || topCol < 0 || topRow > rows - 1 || topCol > cols -1) {
-                    topRow = false;
-                    topCol = false;
+                if (topRow < 0 || topCol < 0 || topRow > rows - 1 || topCol > cols - 1) {
+                    topRow = undefined;
+                    topCol = undefined;
                 }
 
-                if (rightRow < 0 || rightCol < 0 || rightRow > rows - 1 || rightCol > cols -1) {
-                    rightRow = false;
-                    rightCol = false;
+                if (rightRow < 0 || rightCol < 0 || rightRow > rows - 1 || rightCol > cols - 1) {
+                    rightRow = undefined;
+                    rightCol = undefined;
                 }
 
-                if (bottomRow < 0 || bottomCol < 0 || bottomRow > rows - 1 || bottomCol > cols -1) {
-                    bottomRow = false;
-                    bottomCol = false;
+                if (bottomRow < 0 || bottomCol < 0 || bottomRow > rows - 1 || bottomCol > cols - 1) {
+                    bottomRow = undefined;
+                    bottomCol = undefined;
                 }
 
-                if (leftRow < 0 || leftCol < 0 || leftRow > rows - 1 || leftCol > cols -1) {
-                    leftRow = false;
-                    leftCol = false;
+                if (leftRow < 0 || leftCol < 0 || leftRow > rows - 1 || leftCol > cols - 1) {
+                    leftRow = undefined;
+                    leftCol = undefined;
                 }
 
                 var cell = {
@@ -104,7 +93,7 @@ export default class GameScene extends Phaser.Scene {
                         bottom : true,
                         left : true
                     },
-                    neighbours : {
+                    neighbours: {
                         top : {
                             r : topRow,
                             c : topCol,
@@ -121,106 +110,92 @@ export default class GameScene extends Phaser.Scene {
                             r : leftRow,
                             c : leftCol,
                         },
-                    },
+                    }
                 };
 
-
-
-                // console.log(grid[i]);
-
-                // console.log(top)
-
-                // var top = this.index(c, r - 1);
-                // var right = this.index(c + 1, r);
-                // var bottom = this.index(c, r + 1);
-                // var left = this.index(c - 1, r);
-
-                // neighbours.push(top);
-                // neighbours.push(right);
-                // neighbours.push(bottom);
-                // neighbours.push(left);
-
-                grid.push(cell);
+                grid[r + "|" + c] = cell;
             }
         }
 
-        var current = grid[0];
-        current.visited = true;
+        var stack = {};
+        stack["0|0"] = {
+            index : "0|0",
+            visited : true,
+            walls : {
+                top : true,
+                right : true,
+                bottom : true,
+                left : true
+            }
+        };
 
-        // for (var i = 0; i < grid.length; i++) {
-        //     console.log(grid[i]);
+        var cellCount = rows * cols;
+        console.log(cellCount)
+        for (var i = 0; i < cellCount;) {
+            var stackKeys = Object.keys(stack);
+            // get last index form stack, so that we have a current index to use
+            var stackLastIndex = stackKeys.slice(-1)[0];
 
-        //     let top = grid[i].c - 1;
-        //     // let right =
-        //     // let bottom =
-        //     // let left =
+            var neighbours = grid[stackLastIndex]["neighbours"];
 
-        //     neighbours.push(top);
+            var choices = [];
+            for (var type in neighbours) {
+                let values = neighbours[type];
 
-        //     // let white_square = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "white_square");
-        //     // white_square.setOrigin(0, 0);
-        // }
+                if (values.r === undefined || values.c === undefined) {
+                    continue;
+                }
 
-        console.log(grid);
-        // console.log(grid)
+                let key = values.r + "|" + values.c;
+                if (grid[key].visited) {
+                    continue;
+                }
 
-        // console.log(grid);
+                choices.push(values);
+            }
 
-        // let mazeWidth = 16;
-        // let mazeHeight = 16;
+            if (!choices.length) {
+                let key = Object.keys(stack).pop();
+                delete stack[key];
+                continue;
+            }
 
-        // let firstTile = {
-        //     visited: true,
-        //     walls: {
-        //         top: true,
-        //         down: false,
-        //         left: true,
-        //         right: false
-        //     }
-        // };
+            let randomIndex = Math.floor(Math.random() * choices.length);
+            let randomChoice = choices[randomIndex];
+            let nextChoiceIndex = randomChoice.r + "|" + randomChoice.c;
 
-        // let maze = [];
-        // maze.push(firstTile);
+            grid[nextChoiceIndex].visited = true;
 
-        // let numVisisted = 1;
+            stack[nextChoiceIndex] = {
+                index : nextChoiceIndex,
+                visited : true,
+                walls : {
+                    top : true,
+                    right : true,
+                    bottom : true,
+                    left : true
+                }
+            };
+            i++;
+        }
 
-        // let mazeStack = [];
-        // mazeStack.push(0, 0, "VISITED");
-        // // maze[0] = true;
-        // console.log(maze);
-        // // console.log(mazeStack);
+        // FOR TESTING - the grid count for visisted must be the same as the total grid cell count.
+        var length = 0;
+        for (var i in grid) {
+            if (grid[i].visited == true) {
+                length ++;
+            }
+        }
+        console.log(length);
 
-        // for (let i = 0; i <= (mazeHeight * mazeWidth); i++) {
+        for (var i in grid) {
+            if (grid[i].visited) {
+                let white_square = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "white_square");
+                white_square.setOrigin(0, 0);
+            }
+        }
 
-        //     if (maze[i].visited = true) {
-        //         console.log("hello");
-
-        //     }
-        // }
-        // for (var index in maze) {
-
-        //     for (var index2 in maze[index]) {
-
-        //         let log = maze[index][index2];
-
-        //         console.log(log.x);
-        //     }
-        // }
-
-        // for (var section = 0; section < maze.length; section++) {
-        //     console.log(maze[section].length)
-
-        //     // for (var line = 0; line < maze[section].length; line++) {
-        //     //     console.log(section[Object.values(line)]);
-        //     // }
-        // }
     };
-
-    // show(cell) {
-    //     var x = cell.c * this.cellSize;
-    //     var y = cell.r * this.cellSize;
-    //     rect(x,y,this.cellSize,this.cellSize);
-    // }
 
     index(r, c) {
 
