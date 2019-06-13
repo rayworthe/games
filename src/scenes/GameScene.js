@@ -7,6 +7,22 @@ export default class GameScene extends Phaser.Scene {
     preload() {
         this.load.image("honk", "assets/honkhonksnippet.png");
         this.load.image("white_square", "assets/white_square.png");
+        this.load.image("0000", "assets/0000.png");
+        this.load.image("0001", "assets/0001.png");
+        this.load.image("0010", "assets/0010.png");
+        this.load.image("0011", "assets/0011.png");
+        this.load.image("0100", "assets/0100.png");
+        this.load.image("0101", "assets/0101.png");
+        this.load.image("0110", "assets/0110.png");
+        this.load.image("0111", "assets/0111.png");
+        this.load.image("1000", "assets/1000.png");
+        this.load.image("1001", "assets/1001.png");
+        this.load.image("1010", "assets/1010.png");
+        this.load.image("1011", "assets/1011.png");
+        this.load.image("1100", "assets/1100.png");
+        this.load.image("1101", "assets/1101.png");
+        this.load.image("1110", "assets/1110.png");
+        this.load.image("1111", "assets/1111.png");
     };
 
     // Created things when the game is running.
@@ -120,6 +136,8 @@ export default class GameScene extends Phaser.Scene {
         var stack = {};
         stack["0|0"] = {
             index : "0|0",
+            r : 0,
+            c : 0,
             visited : true,
             walls : {
                 top : true,
@@ -130,7 +148,6 @@ export default class GameScene extends Phaser.Scene {
         };
 
         var cellCount = rows * cols;
-        console.log(cellCount)
         for (var i = 0; i < cellCount;) {
             var stackKeys = Object.keys(stack);
             // get last index form stack, so that we have a current index to use
@@ -166,40 +183,128 @@ export default class GameScene extends Phaser.Scene {
 
             grid[nextChoiceIndex].visited = true;
 
+            let key = Object.keys(stack).pop();
+
+            let prevCell = grid[key];
+            let nextCell = grid[nextChoiceIndex];
+
+            // Gone down
+            if (nextCell.r - prevCell.r == 1 && nextCell.c - prevCell.c == 0) {
+                prevCell.walls.bottom = false;
+                nextCell.walls.top = false;
+            }
+
+            // Gone right
+            if (nextCell.r - prevCell.r == 0 && nextCell.c - prevCell.c == 1) {
+                prevCell.walls.right = false;
+                nextCell.walls.left = false;
+            }
+
+            // Gone left
+            if (nextCell.r - prevCell.r == 0 && nextCell.c - prevCell.c == -1) {
+                prevCell.walls.left = false;
+                nextCell.walls.right = false;
+            }
+
+            // Gone up
+            if (nextCell.r - prevCell.r == -1 && nextCell.c - prevCell.c == 0) {
+                prevCell.walls.top = false;
+                nextCell.walls.bottom = false;
+            }
+
             stack[nextChoiceIndex] = {
                 index : nextChoiceIndex,
+                r : randomChoice.r,
+                c : randomChoice.c,
                 visited : true,
-                walls : {
-                    top : true,
-                    right : true,
-                    bottom : true,
-                    left : true
-                }
             };
             i++;
         }
 
-        // FOR TESTING - the grid count for visisted must be the same as the total grid cell count.
-        var length = 0;
         for (var i in grid) {
-            if (grid[i].visited == true) {
-                length ++;
+            var walls = grid[i].walls;
+
+            if (walls.top == true && walls.right == false && walls.bottom == false && walls.left == false) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1000");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == false && walls.right == true && walls.bottom == false && walls.left == false) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0100");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == false && walls.right == false && walls.bottom == true && walls.left == false) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0010");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == false && walls.right == false && walls.bottom == false && walls.left == true) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0001");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == true && walls.right == true && walls.bottom == false && walls.left == false) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1100");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == false && walls.right == true && walls.bottom == true && walls.left == false) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0110");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == false && walls.right == false && walls.bottom == true && walls.left == true) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0011");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == true && walls.right == false && walls.bottom == false && walls.left == true) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1001");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == true && walls.right == true && walls.bottom == true && walls.left == false) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1110");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == false && walls.right == true && walls.bottom == true && walls.left == true) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0111");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == false && walls.right == false && walls.bottom == false && walls.left == false) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0000");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == true && walls.right == true && walls.bottom == true && walls.left == true) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1111");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == true && walls.right == true && walls.bottom == false && walls.left == true) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1101");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == false && walls.right == true && walls.bottom == false && walls.left == true) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0101");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == true && walls.right == false && walls.bottom == true && walls.left == false) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1010");
+                wallImg.setOrigin(0, 0);
+            }
+
+            if (walls.top == true && walls.right == false && walls.bottom == true && walls.left == true) {
+                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1011");
+                wallImg.setOrigin(0, 0);
             }
         }
-        console.log(length);
-
-        for (var i in grid) {
-            if (grid[i].visited) {
-                let white_square = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "white_square");
-                white_square.setOrigin(0, 0);
-            }
-        }
-
     };
-
-    index(r, c) {
-
-    }
 
     update() {
         this.honk.setVelocity(0);
