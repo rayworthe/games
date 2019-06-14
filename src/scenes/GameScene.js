@@ -7,6 +7,14 @@ export default class GameScene extends Phaser.Scene {
     preload() {
         this.load.image("honk", "assets/honkhonksnippet.png");
         this.load.image("white_square", "assets/white_square.png");
+
+        /*
+         Images below represent walls, 0 = false, 1 = true.
+         In order of naming convention - TOP - RIGHT - BOTTOM - LEFT
+         0000 = false, false, false, false - a white sqaure with no walls.
+         1111 = true, true, true, true - a white square with all walls.
+         1010 = true, false, true, false - a white sqaure with a top wall, and a bottom wall.
+        */
         this.load.image("0000", "assets/0000.png");
         this.load.image("0001", "assets/0001.png");
         this.load.image("0010", "assets/0010.png");
@@ -27,12 +35,10 @@ export default class GameScene extends Phaser.Scene {
 
     // Created things when the game is running.
     create() {
+        this.honk = this.physics.add.sprite(50, 50, "honk");
+
         // Character movement
         this.cursors = this.input.keyboard.createCursorKeys();
-
-        this.honk = this.physics.add.sprite(50, 50, "honk");
-        this.honk.setScale(0.1);
-        this.honk.setCollideWorldBounds(true);
 
         this.doublePresses = [];
 
@@ -55,16 +61,24 @@ export default class GameScene extends Phaser.Scene {
             });
         }
 
+        // GRID CREATION STARTS BELOW
+
+        // Get an instance of the camera, set in the index.js file
         let camera = this.cameras.main;
 
+        // Set the size of each cell for the grid
         var cellSize = 40;
 
+        // Get the row / col count, using the dimensions of the canvas
         let rows = (camera.height / cellSize);
         let cols = (camera.width / cellSize);
 
+        /*
+         'r' represents Row, 'c' represents Column
+         Grid creation below - for the time being, just want to initiate the grid - logic below these loops sets walls etc
+        */
         var grid = {};
         var stack = {};
-        // 'r' represents Row, 'c' represents Column
         for (var r = 0; r < rows; r++) {
             for (var c = 0; c < cols; c++) {
                 let topRow = r;
@@ -79,6 +93,10 @@ export default class GameScene extends Phaser.Scene {
                 let leftRow = r - 1;
                 let leftCol = c;
 
+                /*
+                 This makes sure that we dont allow for any false coordinates
+                 (eg - if we are at 0,0, there are only two possible neighbours, we cant have a row / col coordinate of -1 - they doesn't exist)
+                */
                 if (topRow < 0 || topCol < 0 || topRow > rows - 1 || topCol > cols - 1) {
                     topRow = undefined;
                     topCol = undefined;
@@ -99,6 +117,7 @@ export default class GameScene extends Phaser.Scene {
                     leftCol = undefined;
                 }
 
+                // Cell in grid
                 var cell = {
                     r : r,
                     c : c,
@@ -129,64 +148,76 @@ export default class GameScene extends Phaser.Scene {
                     }
                 };
 
+                // Set a key for each coordinate - we could just use the c and r in the object, but I find it easier this way ;)
                 grid[r + "|" + c] = cell;
             }
         }
 
+        // Set the first variables of the stack
         var stack = {};
         stack["0|0"] = {
             index : "0|0",
             r : 0,
             c : 0,
             visited : true,
-            walls : {
-                top : true,
-                right : true,
-                bottom : true,
-                left : true
-            }
         };
 
+        // Itterate for at LEAST the cell count
         var cellCount = rows * cols;
         for (var i = 0; i < cellCount;) {
             var stackKeys = Object.keys(stack);
-            // get last index form stack, so that we have a current index to use
+            // get last index form stack, so that we have an index to use
             var stackLastIndex = stackKeys.slice(-1)[0];
 
             var neighbours = grid[stackLastIndex]["neighbours"];
 
+            // Get the available neighbours that we can actually move to next.
             var choices = [];
             for (var type in neighbours) {
                 let values = neighbours[type];
 
+                // Make sure that the next choice exists, isnt off the grid
                 if (values.r === undefined || values.c === undefined) {
                     continue;
                 }
 
+                // Make sure new choice hasn't been visited
                 let key = values.r + "|" + values.c;
                 if (grid[key].visited) {
                     continue;
                 }
 
+                // Add valid choices to array
                 choices.push(values);
             }
 
+            // If there are available choices, pop the last entry of the stack (backtrack), and then start the loop again, to try and find available choices
             if (!choices.length) {
                 let key = Object.keys(stack).pop();
                 delete stack[key];
                 continue;
             }
 
+            // Get random index of one of the available neighbours
             let randomIndex = Math.floor(Math.random() * choices.length);
+
+            // Grab the random choice from the available neighbours, using the random index
             let randomChoice = choices[randomIndex];
+
+            // Grab the Row and Col coordinates from the random choice
             let nextChoiceIndex = randomChoice.r + "|" + randomChoice.c;
 
+            // Set the grid cell at the coordinates in the itteration as visited
             grid[nextChoiceIndex].visited = true;
 
+            // Get the key of the PREVIOUS stack coordinates, so we can determine which direction the algorithm has chosen to travel
             let key = Object.keys(stack).pop();
 
+            // Set the previous cell the algorithm was at, before it went to the next cell - also set the next cell
             let prevCell = grid[key];
             let nextCell = grid[nextChoiceIndex];
+
+            // Below determines which way the algorithm went - there may be many more ways to do this - this is just one. ( and probably many more better ways )
 
             // Gone down
             if (nextCell.r - prevCell.r == 1 && nextCell.c - prevCell.c == 0) {
@@ -212,97 +243,39 @@ export default class GameScene extends Phaser.Scene {
                 nextCell.walls.bottom = false;
             }
 
+            // Add next choice to stack, to set the next comparison
             stack[nextChoiceIndex] = {
                 index : nextChoiceIndex,
                 r : randomChoice.r,
                 c : randomChoice.c,
                 visited : true,
             };
+
+            // We only incriment if the grid cell has been visited, since the algorithm needs to run as long as all cells haven't been visited
             i++;
         }
 
+        // Below is where we display the maze itself.
         for (var i in grid) {
             var walls = grid[i].walls;
 
-            if (walls.top == true && walls.right == false && walls.bottom == false && walls.left == false) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1000");
-                wallImg.setOrigin(0, 0);
+            let columnX = grid[i].c * 40;
+            let columnY = grid[i].r * 40;
+
+            let image = "";
+            for (var type in walls) {
+                let value = walls[type];
+
+                let string = "0";
+                if (value === true) {
+                    string = "1";
+                }
+
+                image += string;
             }
 
-            if (walls.top == false && walls.right == true && walls.bottom == false && walls.left == false) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0100");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == false && walls.right == false && walls.bottom == true && walls.left == false) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0010");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == false && walls.right == false && walls.bottom == false && walls.left == true) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0001");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == true && walls.right == true && walls.bottom == false && walls.left == false) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1100");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == false && walls.right == true && walls.bottom == true && walls.left == false) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0110");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == false && walls.right == false && walls.bottom == true && walls.left == true) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0011");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == true && walls.right == false && walls.bottom == false && walls.left == true) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1001");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == true && walls.right == true && walls.bottom == true && walls.left == false) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1110");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == false && walls.right == true && walls.bottom == true && walls.left == true) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0111");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == false && walls.right == false && walls.bottom == false && walls.left == false) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0000");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == true && walls.right == true && walls.bottom == true && walls.left == true) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1111");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == true && walls.right == true && walls.bottom == false && walls.left == true) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1101");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == false && walls.right == true && walls.bottom == false && walls.left == true) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "0101");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == true && walls.right == false && walls.bottom == true && walls.left == false) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1010");
-                wallImg.setOrigin(0, 0);
-            }
-
-            if (walls.top == true && walls.right == false && walls.bottom == true && walls.left == true) {
-                let wallImg = this.physics.add.image(grid[i].c * 40, grid[i].r * 40, "1011");
-                wallImg.setOrigin(0, 0);
-            }
+            let wallImg = this.physics.add.image(columnX, columnY, image);
+            wallImg.setOrigin(0, 0);
         }
     };
 
