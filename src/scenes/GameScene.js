@@ -1,5 +1,6 @@
 import Maze from "../modules/Maze";
 import Map from "../modules/Map";
+import Room from "../modules/Room";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -10,6 +11,9 @@ export default class GameScene extends Phaser.Scene {
     preload() {
         this.load.image("honk", "assets/honkhonksnippet.png");
         this.load.image("white_square", "assets/white_square.png");
+
+        this.load.image("vertical", "assets/verticalCollision.png");
+        this.load.image("horizontal", "assets/horizontalCollision.png");
 
         /*
          Images below represent walls, 0 = false, 1 = true.
@@ -38,7 +42,7 @@ export default class GameScene extends Phaser.Scene {
 
     // Created things when the game is running.
     create() {
-        this.honk = this.physics.add.sprite(50, 50, "honk");
+        // this.honk = this.physics.add.sprite(50, 50, "honk");
 
         // Character movement
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -69,27 +73,55 @@ export default class GameScene extends Phaser.Scene {
 
         let maze = new Maze(this, camera, 40);
         let grid = maze.generateGrid();
-        let newMaze = maze.generateMaze(grid);
+        var newMaze = maze.generateMaze(grid);
 
-        let map = new Map(this, newMaze);
+        // let map = new Map(this, newMaze);
+        // map.generateMap();
 
-        map.generateMap();
+        // Get first room object
+        let room = new Room(this, newMaze["0|0"]);
+        console.log(room.neighbours);
+
+        var neighboursRooms = [];
+        for (var i in room.neighbours) {
+            let neighboursRow = room.neighbours[i].r;
+            let neighboursCol = room.neighbours[i].c;
+
+            if (neighboursRow || neighboursCol) {
+                var neighboursRoom = new Room(this, newMaze[neighboursRow + "|" + neighboursCol]);
+                neighboursRooms.push(neighboursRoom);
+            }
+        }
+
+        console.log(neighboursRooms[1]);
+
+
+        // if (room.walls.bottom == true) {
+        //     var rightBottom = this.add.image(0, 800, "horizontal");
+        // }
+
+
+
+        // for (var i in newMaze) {
+        //     let room = new Room(this, newMaze[i]);
+        //     room.generateRoom();
+        // }
     };
 
     update() {
-        this.honk.setVelocity(0);
+        // this.honk.setVelocity(0);
 
-        if (this.cursors.left.isDown) {
-            this.honk.setVelocityX(this.playerBaseSpeed * -1);
-        } else if (this.cursors.right.isDown) {
-            this.honk.setVelocityX(this.playerBaseSpeed);
-        }
+        // if (this.cursors.left.isDown) {
+        //     this.honk.setVelocityX(this.playerBaseSpeed * -1);
+        // } else if (this.cursors.right.isDown) {
+        //     this.honk.setVelocityX(this.playerBaseSpeed);
+        // }
 
-        if (this.cursors.up.isDown) {
-            this.honk.setVelocityY(this.playerBaseSpeed * -1);
-        } else if (this.cursors.down.isDown) {
-            this.honk.setVelocityY(this.playerBaseSpeed);
-        }
+        // if (this.cursors.up.isDown) {
+        //     this.honk.setVelocityY(this.playerBaseSpeed * -1);
+        // } else if (this.cursors.down.isDown) {
+        //     this.honk.setVelocityY(this.playerBaseSpeed);
+        // }
     };
 
     doublePress(cursorKey, delay, pressCallback, resetCallback) {
