@@ -5,6 +5,23 @@ import Room from "../modules/Room";
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({key : "GameScene"});
+        this.key = null;
+        this.room = null;
+        this.neighboursRooms = null;
+
+        // Get an instance of the camera, set in the index.js file - CANNOT BE DONE IN CONSTRUCTOR
+        //this.camera = this.cameras.main;
+
+        // Cmaera cant be used, instead below is set to null. More info in Maze.js.
+        // this.maze = new Maze(this, camera, 40);
+
+        // Set to string means nothing
+        this.maze = new Maze(this, "camera", 40);
+
+        this.grid = this.maze.generateGrid();
+        this.newMaze = this.maze.generateMaze(this.grid);
+
+        this.map = new Map(this, this.newMaze);
     };
 
     // Where we preload our images, gifs, sound file and anything else we want to load when the game first opens.
@@ -42,7 +59,8 @@ export default class GameScene extends Phaser.Scene {
 
     // Created things when the game is running.
     create() {
-        // this.honk = this.physics.add.sprite(50, 50, "honk");
+        this.honk = this.physics.add.sprite(50, 50, "honk");
+        this.honk.setScale(0.1);
 
         // Character movement
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -68,60 +86,71 @@ export default class GameScene extends Phaser.Scene {
             });
         }
 
-        // Get an instance of the camera, set in the index.js file
-        let camera = this.cameras.main;
+        //this.map.generateMap();
 
-        let maze = new Maze(this, camera, 40);
-        let grid = maze.generateGrid();
-        var newMaze = maze.generateMaze(grid);
-
-        // let map = new Map(this, newMaze);
-        // map.generateMap();
+        /*
+         Key will be changed, depending on the character movement.
+         If the character goes to the right side of the screen (as long as the wall is empty) and wants to travel to the next room,
+         then we set the new key to be the new neighbour coordinate of the cell, to the right - (new coordinates depend on which direction the character moves)
+         and restart the scene. When the game if first opened, change from null, to the first maze key - always "0|0".
+         Will be done in the 'update()'
+        */
+        if (this.key == null) {
+            this.key = "0|0";
+        }
 
         // Get first room object
-        let room = new Room(this, newMaze["0|0"]);
-        console.log(room.neighbours);
+        this.room = new Room(this, this.newMaze[this.key]);
+        this.neighboursRooms = this.neighbours(this.room, this.newMaze);
 
+        console.log(this.room);
+        // console.log(this.neighboursRooms);
+
+        if (this.room.walls.bottom == true || this.room.walls.bottom == undefined) {
+            var bottom = this.add.image(800, 800, "horizontal");
+        }
+
+        if (this.room.walls.left == true || this.room.walls.left == undefined) {
+            var left = this.add.image(0, 800, "vertical");
+        }
+
+        if (this.room.walls.right == true || this.room.walls.left == undefined) {
+            var right = this.add.image(800, 800, "vertical");
+        }
+
+        if (this.room.walls.top == true || this.room.walls.top == undefined) {
+            var top = this.add.image(0, 0, "horizontal");
+        }
+    };
+
+    neighbours(room, maze) {
         var neighboursRooms = [];
         for (var i in room.neighbours) {
             let neighboursRow = room.neighbours[i].r;
             let neighboursCol = room.neighbours[i].c;
 
             if (neighboursRow || neighboursCol) {
-                var neighboursRoom = new Room(this, newMaze[neighboursRow + "|" + neighboursCol]);
+                var neighboursRoom = new Room(this, maze[neighboursRow + "|" + neighboursCol]);
                 neighboursRooms.push(neighboursRoom);
             }
         }
-
-        console.log(neighboursRooms[1]);
-
-
-        // if (room.walls.bottom == true) {
-        //     var rightBottom = this.add.image(0, 800, "horizontal");
-        // }
-
-
-
-        // for (var i in newMaze) {
-        //     let room = new Room(this, newMaze[i]);
-        //     room.generateRoom();
-        // }
-    };
+        return neighboursRooms;
+    }
 
     update() {
-        // this.honk.setVelocity(0);
+        this.honk.setVelocity(0);
 
-        // if (this.cursors.left.isDown) {
-        //     this.honk.setVelocityX(this.playerBaseSpeed * -1);
-        // } else if (this.cursors.right.isDown) {
-        //     this.honk.setVelocityX(this.playerBaseSpeed);
-        // }
+        if (this.cursors.left.isDown) {
+            this.honk.setVelocityX(this.playerBaseSpeed * -1);
+        } else if (this.cursors.right.isDown) {
+            this.honk.setVelocityX(this.playerBaseSpeed);
+        }
 
-        // if (this.cursors.up.isDown) {
-        //     this.honk.setVelocityY(this.playerBaseSpeed * -1);
-        // } else if (this.cursors.down.isDown) {
-        //     this.honk.setVelocityY(this.playerBaseSpeed);
-        // }
+        if (this.cursors.up.isDown) {
+            this.honk.setVelocityY(this.playerBaseSpeed * -1);
+        } else if (this.cursors.down.isDown) {
+            this.honk.setVelocityY(this.playerBaseSpeed);
+        }
     };
 
     doublePress(cursorKey, delay, pressCallback, resetCallback) {

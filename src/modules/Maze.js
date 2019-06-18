@@ -4,8 +4,16 @@ export default class Maze {
         this.camera = camera;
         this.cellsize = cellsize;
 
-        this.rows = (this.camera.height / this.cellsize);
-        this.cols = (this.camera.width / this.cellsize);
+        // this.rows = (this.camera.height / this.cellsize);
+        // this.cols = (this.camera.width / this.cellsize);
+
+        // CANNOT USE ABOVE AT THE MOMENT
+        // In the future, for each room to load when the character is moving around, will need to reset the scene each time.
+        // In order to make this workable, I would need to set the maze in the constructor of the GameScene.js file.
+        // This uses the camera to grab the width and height of the game canvas - the problem is that the camera is INITIATED in the create section og Phaser,
+        // so I cannot use the camera
+        this.rows = 20;
+        this.cols = 20;
     }
 
     generateGrid() {
