@@ -59,8 +59,12 @@ export default class GameScene extends Phaser.Scene {
 
     // Created things when the game is running.
     create() {
-        this.honk = this.physics.add.sprite(50, 50, "honk");
+        this.honk = this.physics.add.sprite(400, 400, "honk");
         this.honk.setScale(0.1);
+        this.honk.setCollideWorldBounds(true);
+        //this.honk.body.setGravityY(300);
+
+        this.screenBounds = this.physics.add.staticGroup();
 
         // Character movement
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -70,8 +74,8 @@ export default class GameScene extends Phaser.Scene {
         this.playerBaseSpeed = 300;
 
         var arrowKeys = {
-            "left" : this.cursors.left,
             "up" : this.cursors.up,
+            "left" : this.cursors.left,
             "right" : this.cursors.right,
             "down" : this.cursors.down
         };
@@ -107,20 +111,22 @@ export default class GameScene extends Phaser.Scene {
         // console.log(this.neighboursRooms);
 
         if (this.room.walls.bottom == true || this.room.walls.bottom == undefined) {
-            var bottom = this.add.image(800, 800, "horizontal");
+            this.screenBounds.create(800, 800, "horizontal");
         }
 
         if (this.room.walls.left == true || this.room.walls.left == undefined) {
-            var left = this.add.image(0, 800, "vertical");
+            this.screenBounds.create(0, 800, "vertical");
         }
 
         if (this.room.walls.right == true || this.room.walls.left == undefined) {
-            var right = this.add.image(800, 800, "vertical");
+            this.screenBounds.create(800, 800, "vertical");
         }
 
         if (this.room.walls.top == true || this.room.walls.top == undefined) {
-            var top = this.add.image(0, 0, "horizontal");
+            this.screenBounds.create(0, 0, "horizontal");
         }
+
+        this.physics.add.collider(this.honk, this.screenBounds);
     };
 
     neighbours(room, maze) {
@@ -139,6 +145,9 @@ export default class GameScene extends Phaser.Scene {
 
     update() {
         this.honk.setVelocity(0);
+
+        // console.log(this.honk.x);
+        // console.log(this.honk.y);
 
         if (this.cursors.left.isDown) {
             this.honk.setVelocityX(this.playerBaseSpeed * -1);
