@@ -2,12 +2,12 @@ import GameScene from "./scenes/GameScene";
 
 window.onload = new Phaser.Game({
     type: Phaser.AUTO,
-    backgroundColor: "#000",
+    backgroundColor: "#cdcdcd",
     physics: {
         default: "arcade",
         arcade: {
             gravity: {y: 0},
-            debug: false
+            debug: true
         }
     },
     scale: {
