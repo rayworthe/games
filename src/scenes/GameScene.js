@@ -8,6 +8,8 @@ export default class GameScene extends Phaser.Scene {
         this.key = null;
         this.room = null;
         this.neighboursRooms = null;
+        this.x = null;
+        this.y = null;
 
         // Get an instance of the camera, set in the index.js file - CANNOT BE DONE IN CONSTRUCTOR
         //this.camera = this.cameras.main;
@@ -22,6 +24,7 @@ export default class GameScene extends Phaser.Scene {
         this.newMaze = this.maze.generateMaze(this.grid);
 
         this.map = new Map(this, this.newMaze);
+
     };
 
     // Where we preload our images, gifs, sound file and anything else we want to load when the game first opens.
@@ -107,44 +110,68 @@ export default class GameScene extends Phaser.Scene {
         this.room = new Room(this, this.newMaze[this.key]);
         this.neighboursRooms = this.neighbours(this.room, this.newMaze);
 
-        console.log(this.room);
-        // console.log(this.neighboursRooms);
-
-        if (this.room.walls.bottom == true || this.room.walls.bottom == undefined) {
+        var currentRoomWalls = this.room.walls;
+        if (currentRoomWalls.bottom == true) {
             this.screenBounds.create(800, 800, "horizontal");
         }
 
-        if (this.room.walls.left == true || this.room.walls.left == undefined) {
+        if (currentRoomWalls.left == true) {
             this.screenBounds.create(0, 800, "vertical");
         }
 
-        if (this.room.walls.right == true || this.room.walls.left == undefined) {
+        if (currentRoomWalls.right == true) {
             this.screenBounds.create(800, 800, "vertical");
         }
 
-        if (this.room.walls.top == true || this.room.walls.top == undefined) {
+        if (currentRoomWalls.top == true) {
             this.screenBounds.create(0, 0, "horizontal");
         }
 
         this.physics.add.collider(this.honk, this.screenBounds);
     };
 
-    neighbours(room, maze) {
-        var neighboursRooms = [];
-        for (var i in room.neighbours) {
-            let neighboursRow = room.neighbours[i].r;
-            let neighboursCol = room.neighbours[i].c;
-
-            if (neighboursRow || neighboursCol) {
-                var neighboursRoom = new Room(this, maze[neighboursRow + "|" + neighboursCol]);
-                neighboursRooms.push(neighboursRoom);
-            }
-        }
-        return neighboursRooms;
-    }
-
     update() {
         this.honk.setVelocity(0);
+
+        // bottom of screen
+        if (this.honk.y > 765) {
+            let newRow = this.room.row + 1;
+            let col = this.room.col;
+
+            this.key = newRow + "|" + col;
+
+            this.scene.restart();
+        }
+
+        // top of screen
+        if (this.honk.y < 40) {
+            let newRow = this.room.row - 1;
+            let col = this.room.col;
+
+            this.key = newRow + "|" + col;
+
+            this.scene.restart();
+        }
+
+        // right of screen
+        if (this.honk.x > 750) {
+            let row = this.room.row;
+            let newCol = this.room.col + 1;
+
+            this.key = row + "|" + newCol;
+
+            this.scene.restart();
+        }
+
+        // left of screen
+        if (this.honk.x < 50) {
+            let row = this.room.row;
+            let newCol = this.room.col - 1;
+
+            this.key = row + "|" + newCol;
+
+            this.scene.restart();
+        }
 
         // console.log(this.honk.x);
         // console.log(this.honk.y);
@@ -161,6 +188,20 @@ export default class GameScene extends Phaser.Scene {
             this.honk.setVelocityY(this.playerBaseSpeed);
         }
     };
+
+    neighbours(room, maze) {
+        var neighboursRooms = [];
+        for (var i in room.neighbours) {
+            let neighboursRow = room.neighbours[i].r;
+            let neighboursCol = room.neighbours[i].c;
+
+            if (neighboursRow || neighboursCol) {
+                var neighboursRoom = new Room(this, maze[neighboursRow + "|" + neighboursCol]);
+                neighboursRooms.push(neighboursRoom);
+            }
+        }
+        return neighboursRooms;
+    }
 
     doublePress(cursorKey, delay, pressCallback, resetCallback) {
         cursorKey.on("down", (event) => {
