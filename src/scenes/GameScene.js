@@ -102,30 +102,7 @@ export default class GameScene extends Phaser.Scene {
          and restart the scene. When the game if first opened, change from null, to the first maze key - always "0|0".
          Will be done in the 'update()'
         */
-        if (this.key == null) {
-            this.key = "0|0";
-        }
 
-        // Get first room object
-        // this.room = new Room(this, this.newMaze[this.key]);
-        // this.neighboursRooms = this.neighbours(this.room, this.newMaze);
-
-        // var currentRoomWalls = this.room.walls;
-        // if (currentRoomWalls.bottom == true) {
-        //     this.screenBounds.create(800, 800, "horizontal");
-        // }
-
-        // if (currentRoomWalls.left == true) {
-        //     this.screenBounds.create(0, 800, "vertical");
-        // }
-
-        // if (currentRoomWalls.right == true) {
-        //     this.screenBounds.create(800, 800, "vertical");
-        // }
-
-        // if (currentRoomWalls.top == true) {
-        //     this.screenBounds.create(0, 0, "horizontal");
-        // }
         if (this.key == null) {
             this.key = "0|0";
         }
@@ -140,10 +117,9 @@ export default class GameScene extends Phaser.Scene {
     };
     getRoom(incomingkey){
         
-        if(this.screenBounds.getChildren().length != 0){
-            this.screenBounds.clear(true, true)
-            console.log("screenbounds not null");
-        }
+        //if(this.screenBounds.getChildren().length != 0){
+        this.screenBounds.clear(true, true)
+        //}
         
     
         
