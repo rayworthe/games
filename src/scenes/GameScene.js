@@ -62,12 +62,12 @@ export default class GameScene extends Phaser.Scene {
 
     // Created things when the game is running.
     create() {
-        this.honk = this.physics.add.sprite(400, 400, "honk");
-        this.honk.setScale(0.1);
-        this.honk.setCollideWorldBounds(true);
+        // this.honk = this.physics.add.sprite(400, 400, "honk");
+        // this.honk.setScale(0.1);
+        // this.honk.setCollideWorldBounds(true);
         //this.honk.body.setGravityY(300);
 
-        this.screenBounds = this.physics.add.staticGroup();
+        //this.screenBounds = this.physics.add.staticGroup();
 
         // Character movement
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -107,7 +107,48 @@ export default class GameScene extends Phaser.Scene {
         }
 
         // Get first room object
-        this.room = new Room(this, this.newMaze[this.key]);
+        // this.room = new Room(this, this.newMaze[this.key]);
+        // this.neighboursRooms = this.neighbours(this.room, this.newMaze);
+
+        // var currentRoomWalls = this.room.walls;
+        // if (currentRoomWalls.bottom == true) {
+        //     this.screenBounds.create(800, 800, "horizontal");
+        // }
+
+        // if (currentRoomWalls.left == true) {
+        //     this.screenBounds.create(0, 800, "vertical");
+        // }
+
+        // if (currentRoomWalls.right == true) {
+        //     this.screenBounds.create(800, 800, "vertical");
+        // }
+
+        // if (currentRoomWalls.top == true) {
+        //     this.screenBounds.create(0, 0, "horizontal");
+        // }
+        if (this.key == null) {
+            this.key = "0|0";
+        }
+        this.screenBounds = this.physics.add.staticGroup();
+        this.getRoom(this.key);
+        this.x = 400;
+        this.y = 400;
+        this.honk = this.physics.add.sprite(this.x, this.y, "honk");
+        this.honk.setScale(0.1);
+        this.honk.setCollideWorldBounds(true);
+        this.physics.add.collider(this.honk, this.screenBounds);
+    };
+    getRoom(incomingkey){
+        
+        if(this.screenBounds.getChildren().length != 0){
+            this.screenBounds.clear(true, true)
+            console.log("screenbounds not null");
+        }
+        
+    
+        
+        // Get first room object
+        this.room = new Room(this, this.newMaze[incomingkey]);
         this.neighboursRooms = this.neighbours(this.room, this.newMaze);
 
         var currentRoomWalls = this.room.walls;
@@ -126,10 +167,11 @@ export default class GameScene extends Phaser.Scene {
         if (currentRoomWalls.top == true) {
             this.screenBounds.create(0, 0, "horizontal");
         }
-
-        this.physics.add.collider(this.honk, this.screenBounds);
-    };
-
+    }
+    setHonkPos(x,y){
+        this.honk.x = x;
+        this.honk.y = y;
+    }
     update() {
         this.honk.setVelocity(0);
 
@@ -137,40 +179,36 @@ export default class GameScene extends Phaser.Scene {
         if (this.honk.y > 765) {
             let newRow = this.room.row + 1;
             let col = this.room.col;
-
             this.key = newRow + "|" + col;
-
-            this.scene.restart();
+            this.getRoom(this.key)
+            this.setHonkPos(this.honk.x,45);
         }
 
         // top of screen
         if (this.honk.y < 40) {
             let newRow = this.room.row - 1;
             let col = this.room.col;
-
             this.key = newRow + "|" + col;
-
-            this.scene.restart();
+            this.getRoom(this.key);
+            this.setHonkPos(this.honk.x,760)
         }
 
         // right of screen
         if (this.honk.x > 750) {
             let row = this.room.row;
             let newCol = this.room.col + 1;
-
             this.key = row + "|" + newCol;
-
-            this.scene.restart();
+            this.getRoom(this.key);
+            this.setHonkPos(55, this.honk.y);
         }
 
         // left of screen
         if (this.honk.x < 50) {
             let row = this.room.row;
             let newCol = this.room.col - 1;
-
             this.key = row + "|" + newCol;
-
-            this.scene.restart();
+            this.getRoom(this.key);
+            this.setHonkPos(745,this.honk.y);
         }
 
         // console.log(this.honk.x);
