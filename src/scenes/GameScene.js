@@ -24,8 +24,8 @@ export default class GameScene extends Phaser.Scene {
         this.grid = this.maze.generateGrid();
         this.newMaze = this.maze.generateMaze(this.grid);
         //this.player = new Player(this);
-        this.map = new Map(this, this.newMaze);
-
+        this.map = null;
+        this.visitedrooms = [];
     };
 
     // Where we preload our images, gifs, sound file and anything else we want to load when the game first opens.
@@ -61,21 +61,19 @@ export default class GameScene extends Phaser.Scene {
         this.load.image("1111", "assets/1111.png");
 
         this.load.image("tilesetimage", "assets/fantasy_tiles.png");//, {frameWidth : 20, frameHeight : 20});
-        this.load.tilemapTiledJSON("map", "assets/tile_map.json");
+        this.load.tilemapTiledJSON("map", "assets/0_0.json");
+        this.load.tilemapTiledJSON("template", "assets/template.json");
+        //var parsed = JSON.parse("map");
+        //window.localStorage.setItem("0|0", string);
     };
 
     // Created things when the game is running.
     create() {
-        
-        var map = this.make.tilemap({ key: 'map' });
 
-        // The first parameter is the name of the tileset in Tiled and the second parameter is the key
-        // of the tileset image used when loading the file in preload.
-        var tiles = map.addTilesetImage('tileset', 'tilesetimage');
+        this.map = this.make.tilemap({ key: 'template' });
 
-        // You can load a layer from the map using the layer name from Tiled, or by using the layer
-        // index (0 in this case).
-        var layer = map.createStaticLayer(0, tiles, 0, 0);
+        var tiles = this.map.addTilesetImage('tileset', 'tilesetimage');
+        this.dynamicmap = this.map.createDynamicLayer(0, tiles, 0, 0);
 
 
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -101,8 +99,6 @@ export default class GameScene extends Phaser.Scene {
             });
         }
 
-        //this.map.generateMap();
-
         /*
          Key will be changed, depending on the character movement.
          If the character goes to the right side of the screen (as long as the wall is empty) and wants to travel to the next room,
@@ -123,7 +119,6 @@ export default class GameScene extends Phaser.Scene {
         this.honk.setCollideWorldBounds(true);
         //player.createPlayer();
         this.physics.add.collider(this.honk, this.screenBounds);
-
 
     };
     
@@ -165,10 +160,6 @@ export default class GameScene extends Phaser.Scene {
             this.getRoom(this.key);
             this.setHonkPos(745,this.honk.y);
         }
-
-        // console.log(this.honk.x);
-        // console.log(this.honk.y);
-
         if (this.cursors.left.isDown) {
             this.honk.setVelocityX(this.playerBaseSpeed * -1);
         } else if (this.cursors.right.isDown) {
@@ -183,12 +174,7 @@ export default class GameScene extends Phaser.Scene {
     };
 
     getRoom(incomingkey){
-        // will check whether a JSON tilemap is present with the key of the room being moved into
-        // if so it will load amd display that tilemap, if not, room.generateRoom() will be called to create one.
-
         this.screenBounds.clear(true, true);
-
-        // Get first room object
         this.room = new Room(this, this.newMaze[incomingkey]);
         this.neighboursRooms = this.neighbours(this.room, this.newMaze);
 
@@ -208,7 +194,23 @@ export default class GameScene extends Phaser.Scene {
         if (currentRoomWalls.top == true) {
             this.screenBounds.create(0, 0, "horizontal");
         }
-        //this.room.drawPoint();
+        
+        var bool = true;
+        for(var x=0; x<this.visitedrooms.length; x++){
+            if(this.key == this.visitedrooms[x] ){
+                bool = false;
+                break
+            }
+
+        }
+        if(bool){
+            this.room.generateRoom(this.key, this.dynamicmap);
+        }
+        else{
+
+            this.room.loadRoom(this.key, this.dynamicmap);
+        }
+        this.visitedrooms.push(this.key)
     }
 
     setHonkPos(x,y){
