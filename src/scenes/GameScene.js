@@ -22,16 +22,16 @@ export default class GameScene extends Phaser.Scene {
         this.maze = new Maze(this, "camera", 40);
 
         this.grid = this.maze.generateGrid();
-        this.newMaze = this.maze.generateMaze(this.grid);
+        this.newMaze = this.maze.generateMaze(this.grid); // in future the maze can also be saved using the same method
         //this.player = new Player(this);
         this.map = null;
         this.visitedrooms = null;
         //console.log(this.visitedrooms);
-        var visitedrooms_string = window.localStorage.getItem("visited");
-        if(visitedrooms_string!=null){
-            this.visitedrooms = JSON.parse(visitedrooms_string);
+        var visitedrooms_string = window.localStorage.getItem("visited"); // load the JSON string that represents visited rooms
+        if(visitedrooms_string!=null){                                    // if there isn't one then there is no string to parse
+            this.visitedrooms = JSON.parse(visitedrooms_string);          // parse the string to turn it into an object within the program
         }
-        console.log(visitedrooms_string);
+        //console.log(visitedrooms_string);
         
 
 
@@ -70,7 +70,7 @@ export default class GameScene extends Phaser.Scene {
         this.load.image("1111", "assets/1111.png");
 
         this.load.image("tilesetimage", "assets/fantasy_tiles.png");//, {frameWidth : 20, frameHeight : 20});
-        this.load.tilemapTiledJSON("map", "assets/0_0.json");
+        //this.load.tilemapTiledJSON("map", "assets/0_0.json");
         this.load.tilemapTiledJSON("template", "assets/template.json");
         //var parsed = JSON.parse("map");
         //window.localStorage.setItem("0|0", string);
@@ -82,11 +82,11 @@ export default class GameScene extends Phaser.Scene {
         if(this.visitedrooms == null){
             this.visitedrooms = [];
         }
-        
-        this.map = this.make.tilemap({ key: 'template' });
+
+        this.map = this.make.tilemap({ key: 'template' }); // a completely blank tilemap
 
         var tiles = this.map.addTilesetImage('tileset', 'tilesetimage');
-        this.dynamicmap = this.map.createDynamicLayer(0, tiles, 0, 0);
+        this.dynamicmap = this.map.createDynamicLayer(0, tiles, 0, 0);    // a dynamic layer is used to make adding and removing tiles at runtime easier
 
 
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -124,7 +124,7 @@ export default class GameScene extends Phaser.Scene {
             this.key = "0|0";
         }
         this.screenBounds = this.physics.add.staticGroup();
-        this.getRoom(this.key);
+        this.setRoom(this.key);
         this.x = 400;
         this.y = 400;
         this.honk = this.physics.add.sprite(this.x, this.y, "honk");
@@ -142,7 +142,7 @@ export default class GameScene extends Phaser.Scene {
             let newRow = this.room.row + 1;
             let col = this.room.col;
             this.key = newRow + "|" + col;
-            this.getRoom(this.key)
+            this.setRoom(this.key)
             this.setHonkPos(this.honk.x,45);
         }
 
@@ -151,7 +151,7 @@ export default class GameScene extends Phaser.Scene {
             let newRow = this.room.row - 1;
             let col = this.room.col;
             this.key = newRow + "|" + col;
-            this.getRoom(this.key);
+            this.setRoom(this.key);
             this.setHonkPos(this.honk.x,760);
         }
 
@@ -160,7 +160,7 @@ export default class GameScene extends Phaser.Scene {
             let row = this.room.row;
             let newCol = this.room.col + 1;
             this.key = row + "|" + newCol;
-            this.getRoom(this.key);
+            this.setRoom(this.key);
             this.setHonkPos(55, this.honk.y);
         }
 
@@ -169,7 +169,7 @@ export default class GameScene extends Phaser.Scene {
             let row = this.room.row;
             let newCol = this.room.col - 1;
             this.key = row + "|" + newCol;
-            this.getRoom(this.key);
+            this.setRoom(this.key);
             this.setHonkPos(745,this.honk.y);
         }
         if (this.cursors.left.isDown) {
@@ -185,7 +185,7 @@ export default class GameScene extends Phaser.Scene {
         }
     };
 
-    getRoom(incomingkey){
+    setRoom(incomingkey){
         this.screenBounds.clear(true, true);
         this.room = new Room(this, this.newMaze[incomingkey]);
         this.neighboursRooms = this.neighbours(this.room, this.newMaze);
@@ -209,19 +209,19 @@ export default class GameScene extends Phaser.Scene {
         
         var bool = true;
 
-        for(var x=0; x<this.visitedrooms.length; x++){
+        for(var x=0; x<this.visitedrooms.length; x++){ // set "bool" to false if the room you're transitioning to has been visited
             if(this.key == this.visitedrooms[x] ){
-                bool = false;
+                bool = false;                        
                 break;
             }
 
         }
-        if(bool){
+        if(bool){                                                    // if it hasn't been visited then generate a new room and save its key to the "visited" JSON
             this.room.generateRoom(this.key, this.dynamicmap);
             this.visitedrooms.push(this.key);
             window.localStorage.setItem("visited", JSON.stringify(this.visitedrooms));
         }
-        else{
+        else{                                                        // or else load the room from localData
 
             this.room.loadRoom(this.key, this.dynamicmap);
         }
