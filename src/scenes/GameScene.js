@@ -82,7 +82,7 @@ export default class GameScene extends Phaser.Scene {
         if(this.visitedrooms == null){
             this.visitedrooms = [];
         }
-        //console.log(this.visitedrooms);
+        
         this.map = this.make.tilemap({ key: 'template' });
 
         var tiles = this.map.addTilesetImage('tileset', 'tilesetimage');
@@ -132,7 +132,6 @@ export default class GameScene extends Phaser.Scene {
         this.honk.setCollideWorldBounds(true);
         //player.createPlayer();
         this.physics.add.collider(this.honk, this.screenBounds);
-        this.onlyonce = true;
     };
     
     update() {
@@ -218,12 +217,6 @@ export default class GameScene extends Phaser.Scene {
 
         }
         if(bool){
-            // if(this.key == "1|0" || this.key == "0|1"){
-            //     if(this.onlyonce){
-            //         //this.visitedrooms.push("0|0");
-            //         this.onlyonce - false;
-            //     }
-            //}
             this.room.generateRoom(this.key, this.dynamicmap);
             this.visitedrooms.push(this.key);
             window.localStorage.setItem("visited", JSON.stringify(this.visitedrooms));
