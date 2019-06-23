@@ -1,6 +1,7 @@
 import Maze from "../modules/Maze";
 import Map from "../modules/Map";
 import Room from "../modules/Room";
+//import Room from "../modules/Player";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -22,7 +23,7 @@ export default class GameScene extends Phaser.Scene {
 
         this.grid = this.maze.generateGrid();
         this.newMaze = this.maze.generateMaze(this.grid);
-
+        //this.player = new Player(this);
         this.map = new Map(this, this.newMaze);
 
     };
@@ -58,18 +59,25 @@ export default class GameScene extends Phaser.Scene {
         this.load.image("1101", "assets/1101.png");
         this.load.image("1110", "assets/1110.png");
         this.load.image("1111", "assets/1111.png");
+
+        this.load.image("tilesetimage", "assets/fantasy_tiles.png");//, {frameWidth : 20, frameHeight : 20});
+        this.load.tilemapTiledJSON("map", "assets/tile_map.json");
     };
 
     // Created things when the game is running.
     create() {
-        // this.honk = this.physics.add.sprite(400, 400, "honk");
-        // this.honk.setScale(0.1);
-        // this.honk.setCollideWorldBounds(true);
-        //this.honk.body.setGravityY(300);
+        
+        var map = this.make.tilemap({ key: 'map' });
 
-        //this.screenBounds = this.physics.add.staticGroup();
+        // The first parameter is the name of the tileset in Tiled and the second parameter is the key
+        // of the tileset image used when loading the file in preload.
+        var tiles = map.addTilesetImage('tileset', 'tilesetimage');
 
-        // Character movement
+        // You can load a layer from the map using the layer name from Tiled, or by using the layer
+        // index (0 in this case).
+        var layer = map.createStaticLayer(0, tiles, 0, 0);
+
+
         this.cursors = this.input.keyboard.createCursorKeys();
 
         this.doublePresses = [];
@@ -113,41 +121,12 @@ export default class GameScene extends Phaser.Scene {
         this.honk = this.physics.add.sprite(this.x, this.y, "honk");
         this.honk.setScale(0.1);
         this.honk.setCollideWorldBounds(true);
+        //player.createPlayer();
         this.physics.add.collider(this.honk, this.screenBounds);
+
+
     };
-    getRoom(incomingkey){
-        
-        //if(this.screenBounds.getChildren().length != 0){
-        this.screenBounds.clear(true, true)
-        //}
-        
     
-        
-        // Get first room object
-        this.room = new Room(this, this.newMaze[incomingkey]);
-        this.neighboursRooms = this.neighbours(this.room, this.newMaze);
-
-        var currentRoomWalls = this.room.walls;
-        if (currentRoomWalls.bottom == true) {
-            this.screenBounds.create(800, 800, "horizontal");
-        }
-
-        if (currentRoomWalls.left == true) {
-            this.screenBounds.create(0, 800, "vertical");
-        }
-
-        if (currentRoomWalls.right == true) {
-            this.screenBounds.create(800, 800, "vertical");
-        }
-
-        if (currentRoomWalls.top == true) {
-            this.screenBounds.create(0, 0, "horizontal");
-        }
-    }
-    setHonkPos(x,y){
-        this.honk.x = x;
-        this.honk.y = y;
-    }
     update() {
         this.honk.setVelocity(0);
 
@@ -166,7 +145,7 @@ export default class GameScene extends Phaser.Scene {
             let col = this.room.col;
             this.key = newRow + "|" + col;
             this.getRoom(this.key);
-            this.setHonkPos(this.honk.x,760)
+            this.setHonkPos(this.honk.x,760);
         }
 
         // right of screen
@@ -202,6 +181,40 @@ export default class GameScene extends Phaser.Scene {
             this.honk.setVelocityY(this.playerBaseSpeed);
         }
     };
+
+    getRoom(incomingkey){
+        // will check whether a JSON tilemap is present with the key of the room being moved into
+        // if so it will load amd display that tilemap, if not, room.generateRoom() will be called to create one.
+
+        this.screenBounds.clear(true, true);
+
+        // Get first room object
+        this.room = new Room(this, this.newMaze[incomingkey]);
+        this.neighboursRooms = this.neighbours(this.room, this.newMaze);
+
+        var currentRoomWalls = this.room.walls;
+        if (currentRoomWalls.bottom == true) {
+            this.screenBounds.create(800, 800, "horizontal");
+        }
+
+        if (currentRoomWalls.left == true) {
+            this.screenBounds.create(0, 800, "vertical");
+        }
+
+        if (currentRoomWalls.right == true) {
+            this.screenBounds.create(800, 800, "vertical");
+        }
+
+        if (currentRoomWalls.top == true) {
+            this.screenBounds.create(0, 0, "horizontal");
+        }
+        //this.room.drawPoint();
+    }
+
+    setHonkPos(x,y){
+        this.honk.x = x;
+        this.honk.y = y;
+    }
 
     neighbours(room, maze) {
         var neighboursRooms = [];

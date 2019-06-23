@@ -9,12 +9,14 @@ export default class Room {
 		this.col = this.cell.c;
 
 		this.key = this.row + "|" + this.col;
+
+		
+		
 	}
 
 	generateRoom() {
-		// let walls = this.cell.walls;
-		// let neighbours = this.cell.neighbours;
-		// let row = this.cell.row;
-		// let col = this.cell.col;
+		// this will probably use one of these methods https://www.dynetisgames.com/2018/10/28/how-save-load-player-progress-localstorage/ to alter the
+		// data attribute of the tilemap JSON file and save a new copy with this rooms key as the files name.
+
 	}
 }
