@@ -25,7 +25,16 @@ export default class GameScene extends Phaser.Scene {
         this.newMaze = this.maze.generateMaze(this.grid);
         //this.player = new Player(this);
         this.map = null;
-        this.visitedrooms = [];
+        this.visitedrooms = null;
+        //console.log(this.visitedrooms);
+        var visitedrooms_string = window.localStorage.getItem("visited");
+        if(visitedrooms_string!=null){
+            this.visitedrooms = JSON.parse(visitedrooms_string);
+        }
+        console.log(visitedrooms_string);
+        
+
+
     };
 
     // Where we preload our images, gifs, sound file and anything else we want to load when the game first opens.
@@ -69,7 +78,11 @@ export default class GameScene extends Phaser.Scene {
 
     // Created things when the game is running.
     create() {
-
+        
+        if(this.visitedrooms == null){
+            this.visitedrooms = [];
+        }
+        //console.log(this.visitedrooms);
         this.map = this.make.tilemap({ key: 'template' });
 
         var tiles = this.map.addTilesetImage('tileset', 'tilesetimage');
@@ -119,7 +132,7 @@ export default class GameScene extends Phaser.Scene {
         this.honk.setCollideWorldBounds(true);
         //player.createPlayer();
         this.physics.add.collider(this.honk, this.screenBounds);
-
+        this.onlyonce = true;
     };
     
     update() {
@@ -196,21 +209,31 @@ export default class GameScene extends Phaser.Scene {
         }
         
         var bool = true;
+
         for(var x=0; x<this.visitedrooms.length; x++){
             if(this.key == this.visitedrooms[x] ){
                 bool = false;
-                break
+                break;
             }
 
         }
         if(bool){
+            // if(this.key == "1|0" || this.key == "0|1"){
+            //     if(this.onlyonce){
+            //         //this.visitedrooms.push("0|0");
+            //         this.onlyonce - false;
+            //     }
+            //}
             this.room.generateRoom(this.key, this.dynamicmap);
+            this.visitedrooms.push(this.key);
+            window.localStorage.setItem("visited", JSON.stringify(this.visitedrooms));
         }
         else{
 
             this.room.loadRoom(this.key, this.dynamicmap);
         }
-        this.visitedrooms.push(this.key)
+        
+        
     }
 
     setHonkPos(x,y){
