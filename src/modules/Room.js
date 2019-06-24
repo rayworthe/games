@@ -16,28 +16,30 @@ export default class Room {
 
 	generateRoom(key, map){
 		this.clearTileMap(map); // delete all tiles from the tilemap
+
 		var tilearray = [];
 		var spawn_number =4;
-		for(var i=0; i<spawn_number; i++){ // just as a simple example, generate four random coordinates and push to the tilearray
-			var randomspot = {x : Math.floor(Math.random()*40), y : Math.floor(Math.random()*40)}; 
+		for(var i=0; i<spawn_number; i++){ 
+			var randomspot = {Tile_No: Math.floor(Math.random()*639), x : Math.floor(Math.random()*40), y : Math.floor(Math.random()*40)}; 
 			tilearray.push(randomspot);
 		}
 
-		for(var i = 0; i<tilearray.length; i++){  // draw a tile to each of the random points generated - in this simple example just one type of tyle, number 516
-			map.putTileAt(516, tilearray[i].x, tilearray[i].y);
-		}
-
+		this.drawTiles(tilearray, map);
 		window.localStorage.setItem(key, JSON.stringify(tilearray)); // save the tilearray so that it can be used in the loadroom method if the room is ever visited again
 		
 	}
 
 	loadRoom(key, map){
-
+		this.clearTileMap(map);  
 		var room = window.localStorage.getItem(key)
-		room = JSON.parse(room);                       // load and parse the JSON
-		this.clearTileMap(map);                        // clear tilemap 
-		for(var i = 0; i<room.length; i++){            // and place tiles at the points the room array specifies. In future the information saved will specify different types of tile as well as position
-			map.putTileAt(516, room[i].x, room[i].y);  
+		room = JSON.parse(room); 
+		this.drawTiles(room, map);                      // load and parse the JSON
+		                      // clear tilemap 
+		
+	}
+	drawTiles(array, map){
+		for(var i = 0; i<array.length; i++){            // and place tiles at the points the room array specifies. In future the information saved will specify different types of tile as well as position
+			map.putTileAt(array[i].Tile_No, array[i].x, array[i].y);  
 		}
 	}
 	clearTileMap(map){
