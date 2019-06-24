@@ -1,6 +1,7 @@
 import Maze from "../modules/Maze";
 import Map from "../modules/Map";
 import Room from "../modules/Room";
+//import Room from "../modules/Player";
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -21,9 +22,20 @@ export default class GameScene extends Phaser.Scene {
         this.maze = new Maze(this, "camera", 40);
 
         this.grid = this.maze.generateGrid();
-        this.newMaze = this.maze.generateMaze(this.grid);
+        this.newMaze = this.maze.generateMaze(this.grid); // in future the maze can also be saved using the same method
+        //this.player = new Player(this);
+        this.map = null;
+        this.visitedrooms = null;
+        //console.log(this.visitedrooms);
+        var visitedrooms_string = window.localStorage.getItem("visited"); // load the JSON string that represents visited rooms
+        console.log(visitedrooms_string);
 
-        this.map = new Map(this, this.newMaze);
+        if (visitedrooms_string != null) {                                    // if there isn't one then there is no string to parse
+            this.visitedrooms = JSON.parse(visitedrooms_string);          // parse the string to turn it into an object within the program
+        }
+        //console.log(visitedrooms_string);
+
+
 
     };
 
@@ -58,18 +70,31 @@ export default class GameScene extends Phaser.Scene {
         this.load.image("1101", "assets/1101.png");
         this.load.image("1110", "assets/1110.png");
         this.load.image("1111", "assets/1111.png");
+
+        this.load.image("tilesetimage", "assets/fantasy_tiles.png");//, {frameWidth : 20, frameHeight : 20});
+        //this.load.tilemapTiledJSON("map", "assets/0_0.json");
+        this.load.tilemapTiledJSON("template", "assets/template.json");
+        //var parsed = JSON.parse("map");
+        //window.localStorage.setItem("0|0", string);
     };
 
     // Created things when the game is running.
     create() {
-        this.honk = this.physics.add.sprite(400, 400, "honk");
-        this.honk.setScale(0.1);
-        this.honk.setCollideWorldBounds(true);
-        //this.honk.body.setGravityY(300);
 
-        this.screenBounds = this.physics.add.staticGroup();
+        if(this.visitedrooms == null){
+            this.visitedrooms = [];
+        }
 
-        // Character movement
+        this.map = this.make.tilemap({ key: 'template' }); // a completely blank tilemap
+
+        console.log(this.map)
+
+        var tiles = this.map.addTilesetImage('tileset', 'tilesetimage');
+        this.dynamicmap = this.map.createDynamicLayer(0, tiles, 0, 0);    // a dynamic layer is used to make adding and removing tiles at runtime easier
+
+        console.log(tiles);
+        console.log(this.dynamicmap);
+
         this.cursors = this.input.keyboard.createCursorKeys();
 
         this.doublePresses = [];
@@ -93,8 +118,6 @@ export default class GameScene extends Phaser.Scene {
             });
         }
 
-        //this.map.generateMap();
-
         /*
          Key will be changed, depending on the character movement.
          If the character goes to the right side of the screen (as long as the wall is empty) and wants to travel to the next room,
@@ -102,12 +125,76 @@ export default class GameScene extends Phaser.Scene {
          and restart the scene. When the game if first opened, change from null, to the first maze key - always "0|0".
          Will be done in the 'update()'
         */
+
         if (this.key == null) {
             this.key = "0|0";
         }
+        this.screenBounds = this.physics.add.staticGroup();
+        this.setRoom(this.key);
+        this.x = 400;
+        this.y = 400;
+        this.honk = this.physics.add.sprite(this.x, this.y, "honk");
+        this.honk.setScale(0.1);
+        this.honk.setCollideWorldBounds(true);
+        //player.createPlayer();
+        this.physics.add.collider(this.honk, this.screenBounds);
+    };
 
-        // Get first room object
-        this.room = new Room(this, this.newMaze[this.key]);
+    update() {
+        this.honk.setVelocity(0);
+
+        // bottom of screen
+        if (this.honk.y > 765) {
+            let newRow = this.room.row + 1;
+            let col = this.room.col;
+            this.key = newRow + "|" + col;
+            this.setRoom(this.key)
+            this.setHonkPos(this.honk.x, 45);
+        }
+
+        // top of screen
+        if (this.honk.y < 40) {
+            let newRow = this.room.row - 1;
+            let col = this.room.col;
+            this.key = newRow + "|" + col;
+            this.setRoom(this.key);
+            this.setHonkPos(this.honk.x, 760);
+        }
+
+        // right of screen
+        if (this.honk.x > 750) {
+            let row = this.room.row;
+            let newCol = this.room.col + 1;
+            this.key = row + "|" + newCol;
+            this.setRoom(this.key);
+            this.setHonkPos(55, this.honk.y);
+        }
+
+        // left of screen
+        if (this.honk.x < 50) {
+            let row = this.room.row;
+            let newCol = this.room.col - 1;
+            this.key = row + "|" + newCol;
+            this.setRoom(this.key);
+            this.setHonkPos(745, this.honk.y);
+        }
+
+        if (this.cursors.left.isDown) {
+            this.honk.setVelocityX(this.playerBaseSpeed * -1);
+        } else if (this.cursors.right.isDown) {
+            this.honk.setVelocityX(this.playerBaseSpeed);
+        }
+
+        if (this.cursors.up.isDown) {
+            this.honk.setVelocityY(this.playerBaseSpeed * -1);
+        } else if (this.cursors.down.isDown) {
+            this.honk.setVelocityY(this.playerBaseSpeed);
+        }
+    };
+
+    setRoom(incomingkey){
+        this.screenBounds.clear(true, true);
+        this.room = new Room(this, this.newMaze[incomingkey]);
         this.neighboursRooms = this.neighbours(this.room, this.newMaze);
 
         var currentRoomWalls = this.room.walls;
@@ -127,67 +214,29 @@ export default class GameScene extends Phaser.Scene {
             this.screenBounds.create(0, 0, "horizontal");
         }
 
-        this.physics.add.collider(this.honk, this.screenBounds);
-    };
+        var bool = true;
+        for (var x = 0; x < this.visitedrooms.length; x++) { // set "bool" to false if the room you're transitioning to has been visited
+            if (this.key == this.visitedrooms[x]) {
+                bool = false;
+                break;
+            }
 
-    update() {
-        this.honk.setVelocity(0);
-
-        // bottom of screen
-        if (this.honk.y > 765) {
-            let newRow = this.room.row + 1;
-            let col = this.room.col;
-
-            this.key = newRow + "|" + col;
-
-            this.scene.restart();
         }
 
-        // top of screen
-        if (this.honk.y < 40) {
-            let newRow = this.room.row - 1;
-            let col = this.room.col;
+        if (bool) {                                                    // if it hasn't been visited then generate a new room and save its key to the "visited" JSON
+            this.room.generateRoom(this.key, this.dynamicmap);
+            this.visitedrooms.push(this.key);
 
-            this.key = newRow + "|" + col;
-
-            this.scene.restart();
+            window.localStorage.setItem("visited", JSON.stringify(this.visitedrooms));
+        } else {                                                        // or else load the room from localData
+            this.room.loadRoom(this.key, this.dynamicmap);
         }
+    }
 
-        // right of screen
-        if (this.honk.x > 750) {
-            let row = this.room.row;
-            let newCol = this.room.col + 1;
-
-            this.key = row + "|" + newCol;
-
-            this.scene.restart();
-        }
-
-        // left of screen
-        if (this.honk.x < 50) {
-            let row = this.room.row;
-            let newCol = this.room.col - 1;
-
-            this.key = row + "|" + newCol;
-
-            this.scene.restart();
-        }
-
-        // console.log(this.honk.x);
-        // console.log(this.honk.y);
-
-        if (this.cursors.left.isDown) {
-            this.honk.setVelocityX(this.playerBaseSpeed * -1);
-        } else if (this.cursors.right.isDown) {
-            this.honk.setVelocityX(this.playerBaseSpeed);
-        }
-
-        if (this.cursors.up.isDown) {
-            this.honk.setVelocityY(this.playerBaseSpeed * -1);
-        } else if (this.cursors.down.isDown) {
-            this.honk.setVelocityY(this.playerBaseSpeed);
-        }
-    };
+    setHonkPos(x,y) {
+        this.honk.x = x;
+        this.honk.y = y;
+    }
 
     neighbours(room, maze) {
         var neighboursRooms = [];

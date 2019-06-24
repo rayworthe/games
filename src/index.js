@@ -1,5 +1,6 @@
 import GameScene from "./scenes/GameScene";
 
+
 window.onload = new Phaser.Game({
     type: Phaser.AUTO,
     backgroundColor: "#cdcdcd",

@@ -1,3 +1,4 @@
+
 export default class Map {
     constructor(scene, maze) {
         this.scene = scene;

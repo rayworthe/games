@@ -12,6 +12,7 @@ export default class Maze {
         // In order to make this workable, I would need to set the maze in the constructor of the GameScene.js file.
         // This uses the camera to grab the width and height of the game canvas - the problem is that the camera is INITIATED in the create section og Phaser,
         // so I cannot use the camera
+        
         this.rows = 20;
         this.cols = 20;
     }
