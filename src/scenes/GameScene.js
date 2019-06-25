@@ -1,6 +1,9 @@
 import Maze from "../modules/Maze";
 import Map from "../modules/Map";
 import Room from "../modules/Room";
+// var imported = document.createElement('script');
+// imported.src = 'cycle.js';
+// document.head.appendChild(imported);
 //import Room from "../modules/Player";
 
 export default class GameScene extends Phaser.Scene {
@@ -19,24 +22,30 @@ export default class GameScene extends Phaser.Scene {
         // this.maze = new Maze(this, camera, 40);
 
         // Set to string means nothing
-        this.maze = new Maze(this, "camera", 40);
+        var maze_string = window.localStorage.getItem("maze");
+        if(maze_string == null){
+            this.maze = new Maze(this,"camera",40);
+            this.grid = this.maze.generateGrid();
+            this.newMaze = this.maze.generateMaze(this.grid); // in future the maze can also be saved using the same method
+            window.localStorage.setItem("maze", JSON.stringify(this.newMaze));
+        }
+        else{
+            var loadedmaze = JSON.parse(maze_string);
+            this.newMaze = loadedmaze;
+        }
 
-        this.grid = this.maze.generateGrid();
-        this.newMaze = this.maze.generateMaze(this.grid); // in future the maze can also be saved using the same method
         //this.player = new Player(this);
         this.map = null;
         this.visitedrooms = null;
         //console.log(this.visitedrooms);
         var visitedrooms_string = window.localStorage.getItem("visited"); // load the JSON string that represents visited rooms
-        console.log(visitedrooms_string);
-
-        if (visitedrooms_string != null) {                                    // if there isn't one then there is no string to parse
+        if(visitedrooms_string!=null){                                    // if there isn't one then there is no string to parse
             this.visitedrooms = JSON.parse(visitedrooms_string);          // parse the string to turn it into an object within the program
         }
         //console.log(visitedrooms_string);
-
-
-
+        if(this.visitedrooms == null){
+            this.visitedrooms = [];
+        }
     };
 
     // Where we preload our images, gifs, sound file and anything else we want to load when the game first opens.
@@ -80,20 +89,14 @@ export default class GameScene extends Phaser.Scene {
 
     // Created things when the game is running.
     create() {
-
-        if(this.visitedrooms == null){
-            this.visitedrooms = [];
-        }
+        
+        
 
         this.map = this.make.tilemap({ key: 'template' }); // a completely blank tilemap
-
-        console.log(this.map)
 
         var tiles = this.map.addTilesetImage('tileset', 'tilesetimage');
         this.dynamicmap = this.map.createDynamicLayer(0, tiles, 0, 0);    // a dynamic layer is used to make adding and removing tiles at runtime easier
 
-        console.log(tiles);
-        console.log(this.dynamicmap);
 
         this.cursors = this.input.keyboard.createCursorKeys();
 
@@ -139,7 +142,7 @@ export default class GameScene extends Phaser.Scene {
         //player.createPlayer();
         this.physics.add.collider(this.honk, this.screenBounds);
     };
-
+    
     update() {
         this.honk.setVelocity(0);
 
@@ -149,7 +152,7 @@ export default class GameScene extends Phaser.Scene {
             let col = this.room.col;
             this.key = newRow + "|" + col;
             this.setRoom(this.key)
-            this.setHonkPos(this.honk.x, 45);
+            this.setHonkPos(this.honk.x,45);
         }
 
         // top of screen
@@ -158,7 +161,7 @@ export default class GameScene extends Phaser.Scene {
             let col = this.room.col;
             this.key = newRow + "|" + col;
             this.setRoom(this.key);
-            this.setHonkPos(this.honk.x, 760);
+            this.setHonkPos(this.honk.x,760);
         }
 
         // right of screen
@@ -176,9 +179,8 @@ export default class GameScene extends Phaser.Scene {
             let newCol = this.room.col - 1;
             this.key = row + "|" + newCol;
             this.setRoom(this.key);
-            this.setHonkPos(745, this.honk.y);
+            this.setHonkPos(745,this.honk.y);
         }
-
         if (this.cursors.left.isDown) {
             this.honk.setVelocityX(this.playerBaseSpeed * -1);
         } else if (this.cursors.right.isDown) {
@@ -213,27 +215,30 @@ export default class GameScene extends Phaser.Scene {
         if (currentRoomWalls.top == true) {
             this.screenBounds.create(0, 0, "horizontal");
         }
-
+        
         var bool = true;
-        for (var x = 0; x < this.visitedrooms.length; x++) { // set "bool" to false if the room you're transitioning to has been visited
-            if (this.key == this.visitedrooms[x]) {
-                bool = false;
+
+        for(var x=0; x<this.visitedrooms.length; x++){ // set "bool" to false if the room you're transitioning to has been visited
+            if(this.key == this.visitedrooms[x] ){
+                bool = false;                        
                 break;
             }
 
         }
-
-        if (bool) {                                                    // if it hasn't been visited then generate a new room and save its key to the "visited" JSON
+        if(bool){                                                    // if it hasn't been visited then generate a new room and save its key to the "visited" JSON
             this.room.generateRoom(this.key, this.dynamicmap);
             this.visitedrooms.push(this.key);
-
             window.localStorage.setItem("visited", JSON.stringify(this.visitedrooms));
-        } else {                                                        // or else load the room from localData
+        }
+        else{                                                        // or else load the room from localData
+
             this.room.loadRoom(this.key, this.dynamicmap);
         }
+        
+        
     }
 
-    setHonkPos(x,y) {
+    setHonkPos(x,y){
         this.honk.x = x;
         this.honk.y = y;
     }
