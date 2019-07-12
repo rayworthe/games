@@ -23,13 +23,12 @@ export default class GameScene extends Phaser.Scene {
 
         // Set to string means nothing
         var maze_string = window.localStorage.getItem("maze");
-        if(maze_string == null){
+        if (maze_string == null) {
             this.maze = new Maze(this,"camera",40);
             this.grid = this.maze.generateGrid();
             this.newMaze = this.maze.generateMaze(this.grid); // in future the maze can also be saved using the same method
             window.localStorage.setItem("maze", JSON.stringify(this.newMaze));
-        }
-        else{
+        } else {
             var loadedmaze = JSON.parse(maze_string);
             this.newMaze = loadedmaze;
         }
@@ -38,12 +37,13 @@ export default class GameScene extends Phaser.Scene {
         this.map = null;
         this.visitedrooms = null;
         //console.log(this.visitedrooms);
+
         var visitedrooms_string = window.localStorage.getItem("visited"); // load the JSON string that represents visited rooms
-        if(visitedrooms_string!=null){                                    // if there isn't one then there is no string to parse
+        if (visitedrooms_string != null) {                                // if there isn't one then there is no string to parse
             this.visitedrooms = JSON.parse(visitedrooms_string);          // parse the string to turn it into an object within the program
         }
         //console.log(visitedrooms_string);
-        if(this.visitedrooms == null){
+        if (this.visitedrooms == null) {
             this.visitedrooms = [];
         }
     };
@@ -91,24 +91,12 @@ export default class GameScene extends Phaser.Scene {
 
     // Created things when the game is running.
     create() {
+        // this.bandit.play('idle1');
+        // this.bandit.setOrigin(0);
+        // console.log(this.bandit)
+
         this.bandit = this.physics.add.sprite(150, 150, 'banditplayer', 0);
         this.bandit.setScale(3);
-
-        this.anims.create({
-            key : "idle1",
-            repeat : -1,
-            frameRate : 7,
-            frames : this.anims.generateFrameNames('banditplayer', {start: 0, end: 3}),
-        });
-        this.anims.create({
-            key : "idle2",
-            repeat: -1,
-            frameRate : 7,
-            frames : this.anims.generateFrameNames('banditplayer', {start: 4, end: 7}),
-        });
-        this.bandit.play('idle2');
-        // this.bandit.setOrigin(0);
-        console.log(this.bandit)
 
         this.map = this.make.tilemap({ key: 'template' }); // a completely blank tilemap
 
@@ -128,9 +116,12 @@ export default class GameScene extends Phaser.Scene {
             "down" : this.cursors.down
         };
 
+        this.idleAnimation();
         // Used for speeding up the game character
         const arrowKeyVals = Object.values(arrowKeys);
         for (const key of arrowKeyVals) {
+            this.animatePlayer("run", -1, 7, 8, 15, key);
+
             this.doublePress(key, 500, () => {
                 this.playerBaseSpeed = 600;
             }, () => {
@@ -138,80 +129,86 @@ export default class GameScene extends Phaser.Scene {
             });
         }
 
-        /*
-         Key will be changed, depending on the character movement.
-         If the character goes to the right side of the screen (as long as the wall is empty) and wants to travel to the next room,
-         then we set the new key to be the new neighbour coordinate of the cell, to the right - (new coordinates depend on which direction the character moves)
-         and restart the scene. When the game if first opened, change from null, to the first maze key - always "0|0".
-         Will be done in the 'update()'
-        */
-
         if (this.key == null) {
             this.key = "0|0";
         }
+
         this.screenBounds = this.physics.add.staticGroup();
         this.setRoom(this.key);
         this.x = 400;
         this.y = 400;
-        this.honk = this.physics.add.sprite(this.x, this.y, "honk");
-        this.honk.setScale(0.1);
-        this.honk.setCollideWorldBounds(true);
-        //player.createPlayer();
-        this.physics.add.collider(this.honk, this.screenBounds);
+        // this.honk = this.physics.add.sprite(this.x, this.y, "honk");
+        // this.honk.setScale(0.1);
+        this.bandit.setCollideWorldBounds(true);
+        this.physics.add.collider(this.bandit, this.screenBounds);
     };
 
     update() {
-        this.honk.setVelocity(0);
+        this.bandit.setVelocity(0);
 
         // bottom of screen
-        if (this.honk.y > 765) {
+        if (this.bandit.y > 765) {
             let newRow = this.room.row + 1;
             let col = this.room.col;
             this.key = newRow + "|" + col;
             this.setRoom(this.key)
-            this.setHonkPos(this.honk.x,45);
+            this.setPlayerPos(this.bandit.x,45);
         }
 
         // top of screen
-        if (this.honk.y < 40) {
+        if (this.bandit.y < 40) {
             let newRow = this.room.row - 1;
             let col = this.room.col;
             this.key = newRow + "|" + col;
             this.setRoom(this.key);
-            this.setHonkPos(this.honk.x,760);
+            this.setPlayerPos(this.bandit.x,760);
         }
 
         // right of screen
-        if (this.honk.x > 750) {
+        if (this.bandit.x > 750) {
             let row = this.room.row;
             let newCol = this.room.col + 1;
             this.key = row + "|" + newCol;
             this.setRoom(this.key);
-            this.setHonkPos(55, this.honk.y);
+            this.setPlayerPos(55, this.bandit.y);
         }
 
         // left of screen
-        if (this.honk.x < 50) {
+        if (this.bandit.x < 50) {
             let row = this.room.row;
             let newCol = this.room.col - 1;
             this.key = row + "|" + newCol;
             this.setRoom(this.key);
-            this.setHonkPos(745,this.honk.y);
+            this.setPlayerPos(745, this.bandit.y);
         }
+
+        // if (this.cursors.left.isDown) {
+        //     this.honk.setVelocityX(this.playerBaseSpeed * -1);
+        // } else if (this.cursors.right.isDown) {
+        //     this.honk.setVelocityX(this.playerBaseSpeed);
+        // }
+
+        // if (this.cursors.up.isDown) {
+        //     this.honk.setVelocityY(this.playerBaseSpeed * -1);
+        // } else if (this.cursors.down.isDown) {
+        //     this.honk.setVelocityY(this.playerBaseSpeed);
+        // }
+
         if (this.cursors.left.isDown) {
-            this.honk.setVelocityX(this.playerBaseSpeed * -1);
+            // this.animatePlayer("run", -1, 7, 8, 15);
+            this.bandit.setVelocityX(this.playerBaseSpeed * -1);
         } else if (this.cursors.right.isDown) {
-            this.honk.setVelocityX(this.playerBaseSpeed);
+            this.bandit.setVelocityX(this.playerBaseSpeed);
         }
 
         if (this.cursors.up.isDown) {
-            this.honk.setVelocityY(this.playerBaseSpeed * -1);
+            this.bandit.setVelocityY(this.playerBaseSpeed * -1);
         } else if (this.cursors.down.isDown) {
-            this.honk.setVelocityY(this.playerBaseSpeed);
+            this.bandit.setVelocityY(this.playerBaseSpeed);
         }
     };
 
-    setRoom(incomingkey){
+    setRoom(incomingkey) {
         this.screenBounds.clear(true, true);
         this.room = new Room(this, this.newMaze[incomingkey]);
         this.neighboursRooms = this.neighbours(this.room, this.newMaze);
@@ -234,28 +231,23 @@ export default class GameScene extends Phaser.Scene {
         }
 
         var bool = true;
-
-        for(var x=0; x<this.visitedrooms.length; x++){ // set "bool" to false if the room you're transitioning to has been visited
-            if(this.key == this.visitedrooms[x] ){
+        for (var x = 0; x < this.visitedrooms.length; x++) { // set "bool" to false if the room you're transitioning to has been visited
+            if (this.key == this.visitedrooms[x]) {
                 bool = false;
                 break;
             }
-
         }
-        if(bool){                                                    // if it hasn't been visited then generate a new room and save its key to the "visited" JSON
+
+        if (bool) {                                                    // if it hasn't been visited then generate a new room and save its key to the "visited" JSON
             this.room.generateRoom(this.key, this.dynamicmap);
             this.visitedrooms.push(this.key);
             window.localStorage.setItem("visited", JSON.stringify(this.visitedrooms));
-        }
-        else{                                                        // or else load the room from localData
-
+        } else {                                                        // or else load the room from localData
             this.room.loadRoom(this.key, this.dynamicmap);
         }
-
-
     }
 
-    setHonkPos(x,y){
+    setPlayerPos(x,y) {
         this.honk.x = x;
         this.honk.y = y;
     }
@@ -272,6 +264,36 @@ export default class GameScene extends Phaser.Scene {
             }
         }
         return neighboursRooms;
+    }
+
+    animatePlayer(type, repeat, frameRate, startSprite, lastSprite, cursorKey) {
+        this.anims.create({
+            key : type,
+            repeat : repeat,
+            frameRate : frameRate,
+            frames : this.anims.generateFrameNames('banditplayer', {start: startSprite, end: lastSprite}),
+        });
+
+        if (cursorKey) {
+            cursorKey.on("down", (event) => {
+                this.bandit.play(type);
+            })
+
+            cursorKey.on("up", (event) => {
+                this.idleAnimation();
+            })
+        }
+    }
+
+    idleAnimation() {
+        this.anims.create({
+            key : "idle",
+            repeat : -1,
+            frameRate : 7,
+            frames : this.anims.generateFrameNames('banditplayer', {start: 0, end: 3}),
+        });
+
+        this.bandit.play("idle");
     }
 
     doublePress(cursorKey, delay, pressCallback, resetCallback) {
