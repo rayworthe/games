@@ -1,10 +1,17 @@
-export default class Player{
+export default class Player extends Phaser.GameObjects.Sprite{
 
 	constructor(scene )
 	{
+        super();
+
 		this.scene = scene;
 		this.scene.load.image("honk","assets/honkhonksnippet.png" )
 	}
+
+    update()
+    {
+
+    }
 
 	//this.load.image("honk", "assets/honkhonksnippet.png");
 	createPlayer()
@@ -33,4 +40,4 @@ export default class Player{
         //return honk;
 
 	}
-} 
+}

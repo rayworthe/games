@@ -80,6 +80,8 @@ export default class GameScene extends Phaser.Scene {
         this.load.image("1110", "assets/1110.png");
         this.load.image("1111", "assets/1111.png");
 
+        this.load.spritesheet('banditplayer', 'assets/banditPlayer.png', {frameWidth: 48, frameHeight: 48});
+
         this.load.image("tilesetimage", "assets/fantasy_tiles.png");//, {frameWidth : 20, frameHeight : 20});
         //this.load.tilemapTiledJSON("map", "assets/0_0.json");
         this.load.tilemapTiledJSON("template", "assets/template.json");
@@ -89,14 +91,29 @@ export default class GameScene extends Phaser.Scene {
 
     // Created things when the game is running.
     create() {
-        
-        
+        this.bandit = this.physics.add.sprite(150, 150, 'banditplayer', 0);
+        this.bandit.setScale(3);
+
+        this.anims.create({
+            key : "idle1",
+            repeat : -1,
+            frameRate : 7,
+            frames : this.anims.generateFrameNames('banditplayer', {start: 0, end: 3}),
+        });
+        this.anims.create({
+            key : "idle2",
+            repeat: -1,
+            frameRate : 7,
+            frames : this.anims.generateFrameNames('banditplayer', {start: 4, end: 7}),
+        });
+        this.bandit.play('idle2');
+        // this.bandit.setOrigin(0);
+        console.log(this.bandit)
 
         this.map = this.make.tilemap({ key: 'template' }); // a completely blank tilemap
 
         var tiles = this.map.addTilesetImage('tileset', 'tilesetimage');
         this.dynamicmap = this.map.createDynamicLayer(0, tiles, 0, 0);    // a dynamic layer is used to make adding and removing tiles at runtime easier
-
 
         this.cursors = this.input.keyboard.createCursorKeys();
 
@@ -142,7 +159,7 @@ export default class GameScene extends Phaser.Scene {
         //player.createPlayer();
         this.physics.add.collider(this.honk, this.screenBounds);
     };
-    
+
     update() {
         this.honk.setVelocity(0);
 
@@ -215,12 +232,12 @@ export default class GameScene extends Phaser.Scene {
         if (currentRoomWalls.top == true) {
             this.screenBounds.create(0, 0, "horizontal");
         }
-        
+
         var bool = true;
 
         for(var x=0; x<this.visitedrooms.length; x++){ // set "bool" to false if the room you're transitioning to has been visited
             if(this.key == this.visitedrooms[x] ){
-                bool = false;                        
+                bool = false;
                 break;
             }
 
@@ -234,8 +251,8 @@ export default class GameScene extends Phaser.Scene {
 
             this.room.loadRoom(this.key, this.dynamicmap);
         }
-        
-        
+
+
     }
 
     setHonkPos(x,y){
