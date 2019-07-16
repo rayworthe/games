@@ -97,41 +97,49 @@ export default class GameScene extends Phaser.Scene {
 
         this.bandit = this.physics.add.sprite(150, 150, 'banditplayer', 0);
         this.bandit.setScale(3);
+        //this.bandit.body.gravity.y = 15000;
 
         this.map = this.make.tilemap({ key: 'template' }); // a completely blank tilemap
 
         var tiles = this.map.addTilesetImage('tileset', 'tilesetimage');
         this.dynamicmap = this.map.createDynamicLayer(0, tiles, 0, 0);    // a dynamic layer is used to make adding and removing tiles at runtime easier
 
-        this.cursors = this.input.keyboard.createCursorKeys();
-
         this.doublePresses = [];
 
         this.playerBaseSpeed = 300;
 
-        var arrowKeys = {
-            "up" : this.cursors.up,
-            "left" : this.cursors.left,
-            "right" : this.cursors.right,
-            "down" : this.cursors.down
-        };
+        this.controls = this.input.keyboard.addKeys("W, A, S, D, up, down, left, right, space");
 
-        this.idleAnimation();
-        // Used for speeding up the game character
-        const arrowKeyVals = Object.values(arrowKeys);
-        for (const key of arrowKeyVals) {
-            this.animatePlayer("run", -1, 7, 8, 15, key);
+        // default animation
+        this.anims.create({
+            key : "idle",
+            repeat : -1,
+            frameRate : 7,
+            frames : this.anims.generateFrameNames('banditplayer', {start: 0, end: 3}),
+        });
+        this.bandit.play("idle");
+        const controlVaues = Object.values(this.controls);
+        for (const key of controlVaues) {
+            if (key.keyCode == 65 || key.keyCode == 68) {
+                this.animatePlayer("run", -1, 7, 8, 15, key);
 
-            this.doublePress(key, 500, () => {
-                this.playerBaseSpeed = 600;
-            }, () => {
-                this.playerBaseSpeed = 300;
-            });
+                this.doublePress(key, 500, () => {
+                    this.playerBaseSpeed = 600;
+                }, () => {
+                    this.playerBaseSpeed = 300;
+                });
+            }
+
+            if (key.keyCode == 32) {
+                this.animatePlayer("attack", -1, 9, 16, 23, key);
+            }
         }
 
         if (this.key == null) {
             this.key = "0|0";
         }
+
+        // console.log(this.controls)
 
         this.screenBounds = this.physics.add.staticGroup();
         this.setRoom(this.key);
@@ -152,7 +160,7 @@ export default class GameScene extends Phaser.Scene {
             let col = this.room.col;
             this.key = newRow + "|" + col;
             this.setRoom(this.key)
-            this.setPlayerPos(this.bandit.x,45);
+            this.setPlayerPos(this.bandit.x, 45);
         }
 
         // top of screen
@@ -161,7 +169,7 @@ export default class GameScene extends Phaser.Scene {
             let col = this.room.col;
             this.key = newRow + "|" + col;
             this.setRoom(this.key);
-            this.setPlayerPos(this.bandit.x,760);
+            this.setPlayerPos(this.bandit.x, 760);
         }
 
         // right of screen
@@ -182,29 +190,14 @@ export default class GameScene extends Phaser.Scene {
             this.setPlayerPos(745, this.bandit.y);
         }
 
-        // if (this.cursors.left.isDown) {
-        //     this.honk.setVelocityX(this.playerBaseSpeed * -1);
-        // } else if (this.cursors.right.isDown) {
-        //     this.honk.setVelocityX(this.playerBaseSpeed);
-        // }
-
-        // if (this.cursors.up.isDown) {
-        //     this.honk.setVelocityY(this.playerBaseSpeed * -1);
-        // } else if (this.cursors.down.isDown) {
-        //     this.honk.setVelocityY(this.playerBaseSpeed);
-        // }
-
-        if (this.cursors.left.isDown) {
-            // this.animatePlayer("run", -1, 7, 8, 15);
+        if (this.controls.A.isDown) {
             this.bandit.setVelocityX(this.playerBaseSpeed * -1);
-        } else if (this.cursors.right.isDown) {
-            this.bandit.setVelocityX(this.playerBaseSpeed);
+            this.bandit.setFlipX(false);
         }
 
-        if (this.cursors.up.isDown) {
-            this.bandit.setVelocityY(this.playerBaseSpeed * -1);
-        } else if (this.cursors.down.isDown) {
-            this.bandit.setVelocityY(this.playerBaseSpeed);
+        if (this.controls.D.isDown) {
+            this.bandit.setVelocityX(this.playerBaseSpeed);
+            this.bandit.setFlipX(true);
         }
     };
 
@@ -266,7 +259,7 @@ export default class GameScene extends Phaser.Scene {
         return neighboursRooms;
     }
 
-    animatePlayer(type, repeat, frameRate, startSprite, lastSprite, cursorKey) {
+    animatePlayer(type, repeat, frameRate, startSprite, lastSprite, key) {
         this.anims.create({
             key : type,
             repeat : repeat,
@@ -274,26 +267,19 @@ export default class GameScene extends Phaser.Scene {
             frames : this.anims.generateFrameNames('banditplayer', {start: startSprite, end: lastSprite}),
         });
 
-        if (cursorKey) {
-            cursorKey.on("down", (event) => {
-                this.bandit.play(type);
-            })
+        if (key) {
+            key.on("down", (event) => {
+                if (this.anythingPressed()) {
+                    this.bandit.play(type);
+                }
+            });
 
-            cursorKey.on("up", (event) => {
-                this.idleAnimation();
+            key.on("up", (event) => {
+                if (!this.anythingPressed()) {
+                    this.bandit.play("idle");
+                }
             })
         }
-    }
-
-    idleAnimation() {
-        this.anims.create({
-            key : "idle",
-            repeat : -1,
-            frameRate : 7,
-            frames : this.anims.generateFrameNames('banditplayer', {start: 0, end: 3}),
-        });
-
-        this.bandit.play("idle");
     }
 
     doublePress(cursorKey, delay, pressCallback, resetCallback) {
@@ -308,8 +294,20 @@ export default class GameScene extends Phaser.Scene {
 
             this.doublePresses[cursorKey.keyCode] = now;
         });
+
         cursorKey.on("up", () => {
             resetCallback();
         });
+    }
+
+    anythingPressed() {
+        let count = 0;
+        for (let key in this.controls) {
+            let control = this.controls[key];
+            if (control.isDown) {
+                count++;
+            }
+        }
+        return (count > 0);
     }
 }
