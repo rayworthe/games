@@ -42,7 +42,7 @@ export default class GameScene extends Phaser.Scene {
         if (visitedrooms_string != null) {                                // if there isn't one then there is no string to parse
             this.visitedrooms = JSON.parse(visitedrooms_string);          // parse the string to turn it into an object within the program
         }
-        //console.log(visitedrooms_string);
+
         if (this.visitedrooms == null) {
             this.visitedrooms = [];
         }
@@ -95,8 +95,6 @@ export default class GameScene extends Phaser.Scene {
         // this.bandit.setOrigin(0);
         // console.log(this.bandit)
 
-        this.bandit = this.physics.add.sprite(150, 150, 'banditplayer', 0);
-        this.bandit.setScale(3);
         //this.bandit.body.gravity.y = 15000;
 
         this.map = this.make.tilemap({ key: 'template' }); // a completely blank tilemap
@@ -104,11 +102,16 @@ export default class GameScene extends Phaser.Scene {
         var tiles = this.map.addTilesetImage('tileset', 'tilesetimage');
         this.dynamicmap = this.map.createDynamicLayer(0, tiles, 0, 0);    // a dynamic layer is used to make adding and removing tiles at runtime easier
 
+        this.bandit = this.physics.add.sprite(150, 150, 'banditplayer', 0);
+        this.bandit.setScale(3);
+
         this.doublePresses = [];
 
         this.playerBaseSpeed = 300;
 
         this.controls = this.input.keyboard.addKeys("W, A, S, D, up, down, left, right, space");
+
+        this.movement = this.input.keyboard.addKeys("W, A, S, D, up, down, left, right");
 
         // default animation
         this.anims.create({
@@ -117,7 +120,9 @@ export default class GameScene extends Phaser.Scene {
             frameRate : 7,
             frames : this.anims.generateFrameNames('banditplayer', {start: 0, end: 3}),
         });
+
         this.bandit.play("idle");
+
         const controlVaues = Object.values(this.controls);
         for (const key of controlVaues) {
             if (key.keyCode == 65 || key.keyCode == 68) {
@@ -269,16 +274,36 @@ export default class GameScene extends Phaser.Scene {
 
         if (key) {
             key.on("down", (event) => {
-                if (this.anythingPressed()) {
+                let itemsPressed = this.itemsPressed();
+                let pressedButtons = itemsPressed.pressedButtons;
+
+                console.log(itemsPressed.count);
+
+                if (itemsPressed.count == 1) {
                     this.bandit.play(type);
                 }
             });
 
             key.on("up", (event) => {
-                if (!this.anythingPressed()) {
-                    this.bandit.play("idle");
+                let itemsPressed = this.itemsPressed();
+                let pressedButtons = itemsPressed.pressedButtons;
+
+                console.log(itemsPressed.count)
+
+                if (type == "run") {
+                    if (pressedButtons.includes("68") == false && pressedButtons.includes("65") == false) {
+                        this.bandit.play("idle");
+                    }
                 }
-            })
+
+                if (type == "attack") {
+                    if (pressedButtons.includes("68") == false || pressedButtons.includes("65") == false) {
+                        return;
+                    } else if (pressedButtons.includes("32") == false) {
+                        this.bandit.play("idle");
+                    }
+                }
+            });
         }
     }
 
@@ -300,14 +325,20 @@ export default class GameScene extends Phaser.Scene {
         });
     }
 
-    anythingPressed() {
+    itemsPressed() {
         let count = 0;
+        let pressedButtons = [];
         for (let key in this.controls) {
             let control = this.controls[key];
             if (control.isDown) {
+                pressedButtons.push(control.keyCode);
                 count++;
             }
         }
-        return (count > 0);
+
+        return {
+            "count" : count,
+            "pressedButtons" : pressedButtons,
+        }
     }
 }

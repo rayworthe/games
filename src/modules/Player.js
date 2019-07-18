@@ -1,16 +1,13 @@
 export default class Player extends Phaser.GameObjects.Sprite{
 
-	constructor(scene )
+	constructor(scene)
 	{
-        super();
-
-		this.scene = scene;
-		this.scene.load.image("honk","assets/honkhonksnippet.png" )
+		scene.load.image("honk", "assets/honkhonksnippet.png")
 	}
 
     update()
     {
-
+        console.log("hello")
     }
 
 	//this.load.image("honk", "assets/honkhonksnippet.png");
